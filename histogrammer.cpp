@@ -28,7 +28,8 @@ int main(int argc, char* argv[])
         "Prints histogram of characters in text file at input_file_path\n"
         "OPTIONS, any subset of the following:\n"
         "\t-r row_count\toverride row_count, program draws row_count rows of text-based histogram, default = 10\n"
-        "\t-s tick_stride\toverride tick_stride, program draws a tick every tick_stride rows, default = 3";
+        "\t-s tick_stride\toverride tick_stride, program draws a tick every tick_stride rows, default = 3\n"
+        "Arguments must be positive integers\n";
         std::cout << usage;
         return 0;
     }
@@ -49,7 +50,8 @@ int main(int argc, char* argv[])
     size_t rows{ 10 };
     size_t tickStride{ 3 };
 
-    // search for flag [[param]] in [[args]], override setting based on it, return false if invalid arguments are encountered
+    // search for flag [[param]] in [[args]], override setting based on it,
+    // return false if invalid arguments are encountered
     auto parseParam = [&](auto param, auto& setting) {
         auto it = rng::find(args, param);
         if (it != args.end()) {
@@ -57,7 +59,9 @@ int main(int argc, char* argv[])
             if (next != args.end()) {
                 std::string s{ *next }; // parse it as typeof(setting)
                 auto res = std::from_chars(s.data(), s.data() + s.size(), setting);
-                if (res.ec != std::errc{}) { // error could be e.g. arg is NaN, or number is out of range
+                if (res.ec != std::errc{} || rng::any_of(s, [&](auto c) { return !isdigit(c); })) {
+                    // error could be e.g. arg is NaN, or number is out of range
+                    // also reject non-digit chars in general because from_chars allows garbage in the tail
                     std::cout << "Invalid argument for flag " << param << '\n';
                     return false;
                 }
